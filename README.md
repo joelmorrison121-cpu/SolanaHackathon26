@@ -20,6 +20,6 @@ npm test
 npm start
 ```
 
-The API runs at `http://localhost:3000`. It currently uses in-memory storage and a mock settlement adapter. The adapter is isolated in `src/server.js` so Person 1's confirmed Solana settlement function can replace it later without changing the API routes.
+The API runs at `http://localhost:3000`. It currently uses in-memory storage and a mock settlement adapter. The adapter is isolated in `src/lib/solana-adapter.js` so Person 1's confirmed Solana settlement function can replace it later without changing the API routes.
 
 The server is for the hackathon demo. Bills and settlement logs disappear when the server stops. Do not use the current in-memory storage as a production database.
