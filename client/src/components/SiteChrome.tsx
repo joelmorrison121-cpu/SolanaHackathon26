@@ -1,12 +1,27 @@
 import { Link } from "wouter";
 
+function SplitMark({ className = "" }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 48 48"
+      fill="currentColor"
+      aria-hidden="true"
+    >
+      <path d="M34 6H18a14 14 0 0 0 0 28h8a6 6 0 0 1 0 12H10v8h16a14 14 0 0 0 0-28h-8a6 6 0 0 1 0-12h16V6Z" />
+    </svg>
+  );
+}
+
 export function Wordmark({ className = "" }: { className?: string }) {
   return (
     <Link
       href="/"
-      className={`display text-[1.35rem] leading-none text-white no-underline ${className}`}
+      className={`inline-flex items-center gap-2.5 text-white no-underline ${className}`}
+      aria-label="Split"
     >
-      Split
+      <SplitMark className="h-7 w-7 shrink-0 sm:h-8 sm:w-8" />
+      <span className="display text-[1.35rem] leading-none tracking-tight">Split</span>
     </Link>
   );
 }

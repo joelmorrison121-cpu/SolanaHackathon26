@@ -3,6 +3,7 @@ import type {
   PayViewResponse,
   SettleResponse,
 } from "./bills";
+import { publicWalletFromSeed } from "./wallet";
 
 type ApiErrorBody = {
   error?: string;
@@ -45,6 +46,7 @@ export async function createBill(input: {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       creatorId: input.creatorName,
+      creatorWallet: publicWalletFromSeed(input.creatorName),
       currency: "EUR",
       totalAmountMinor,
       payers: input.payers.map(payer => ({

@@ -2,6 +2,7 @@ import { PayPhone } from "@/components/PayPhone";
 import { SiteFooter, SiteHeader } from "@/components/SiteChrome";
 import { Link } from "wouter";
 import { lazy, Suspense } from "react";
+import TechText from "@/components/TechText";
 
 const HyperspeedBackdrop = lazy(() => import("@/components/HyperspeedBackdrop"));
 
@@ -23,9 +24,31 @@ export default function Home() {
               <p className="text-xs font-medium tracking-[0.28em] text-primary uppercase">
                 Hold to speed up
               </p>
-              <h1 className="display mt-6 text-[3.2rem] text-white sm:text-[5rem] lg:text-[5.6rem]">
-                Someone already paid. You tap Pay.
-              </h1>
+              <h1 className="sr-only">Someone already paid. You tap Pay.</h1>
+              <p className="display mt-6 text-[1.7rem] text-white/90 sm:text-[2.35rem]">
+                Someone already paid.
+              </p>
+              <div className="mt-1 h-[132px] w-full max-w-xl sm:h-[180px] lg:h-[210px]">
+                <TechText
+                  text="You tap Pay."
+                  fontFamily="Inter, ui-sans-serif, system-ui, sans-serif"
+                  fontWeight={600}
+                  fontSize={150}
+                  letterSpacing={-0.05}
+                  color="#ffffff"
+                  accentColor="#03B3C3"
+                  reveal="letter"
+                  dashLength={4}
+                  dashGap={2}
+                  specks={15}
+                  strokeWidth={1.5}
+                  selection
+                  labels
+                  draggable
+                  sweep
+                  speed={1}
+                />
+              </div>
               <p className="mt-6 max-w-md text-base leading-7 text-white/70 sm:text-lg sm:leading-8">
                 One person pays for dinner and creates a split. Everyone else gets a
                 link, signs in, and settles their share. No app to download. No
@@ -66,7 +89,7 @@ export default function Home() {
               {
                 n: "01",
                 title: "Someone pays.",
-                body: "They enter the total, add names, and Split writes a link for each person at the table.",
+                body: "Photograph the receipt or enter the total, then assign dishes. Split writes a private link for each person.",
               },
               {
                 n: "02",
