@@ -3,6 +3,7 @@ import { createServer } from 'node:http';
 import test from 'node:test';
 import { bills, createApp, settlementAttempts } from '../src/server.js';
 
+// Start a real HTTP server so tests cover request and response behavior.
 const startServer = async (settlementAdapter) => {
   const server = createServer(createApp({ settlementAdapter }));
   await new Promise((resolve) => server.listen(0, resolve));
@@ -10,24 +11,28 @@ const startServer = async (settlementAdapter) => {
   return { server, baseUrl: `http://localhost:${port}` };
 };
 
+// Use one small valid bill in tests that need a payment link.
 const createBill = (baseUrl) => fetch(`${baseUrl}/api/bills`, {
   method: 'POST',
   headers: { 'content-type': 'application/json' },
   body: JSON.stringify({
     creatorId: 'demo-creator',
+    creatorWallet: 'DQRCcvgiwhwCmR7L82FQFr6X6gb4wBcK1kcNLMghr6A',
     currency: 'EUR',
     totalAmountMinor: 9000,
     payers: [{ displayName: 'Alex', amountOwedMinor: 9000 }]
   })
 });
 
+// Keep each test independent from the previous test.
 test.beforeEach(() => {
   bills.clear();
   settlementAttempts.length = 0;
 });
 
+// Check the security headers and reject an untrusted browser origin.
 test('sets security headers and rejects an unapproved browser origin', async () => {
-  const { server, baseUrl } = await startServer(async () => ({ transactionUrl: 'mock-url' }));
+  const { server, baseUrl } = await startServer(async () => ({ success: true, status: 'confirmed', explorerUrl: 'mock-url' }));
   try {
     const healthResponse = await fetch(`${baseUrl}/health`);
     assert.equal(healthResponse.headers.get('cache-control'), 'no-store');
@@ -53,8 +58,9 @@ test('sets security headers and rejects an unapproved browser origin', async () 
   }
 });
 
+// Check the normal create-bill and payer-lookup flow.
 test('creates a bill and fetches it through its share link', async () => {
-  const { server, baseUrl } = await startServer(async () => ({ transactionUrl: 'mock-url' }));
+  const { server, baseUrl } = await startServer(async () => ({ success: true, status: 'confirmed', explorerUrl: 'mock-url' }));
   try {
     const createResponse = await createBill(baseUrl);
     assert.equal(createResponse.status, 201);
@@ -79,11 +85,13 @@ test('creates a bill and fetches it through its share link', async () => {
   }
 });
 
+// Check successful settlement and protection against paying twice.
 test('settles a payer and prevents a second payment', async () => {
-  const { server, baseUrl } = await startServer(async ({ payerWallet, amountOwedMinor }) => {
+  const { server, baseUrl } = await startServer(async ({ payerWallet, creatorWallet, amountCents }) => {
     assert.equal(payerWallet, '7xKX9pQm123456789ABCDEFGHJKLMNPQR');
-    assert.equal(amountOwedMinor, 9000);
-    return { transactionUrl: 'https://explorer.solana.com/tx/test?cluster=devnet' };
+    assert.equal(creatorWallet, 'DQRCcvgiwhwCmR7L82FQFr6X6gb4wBcK1kcNLMghr6A');
+    assert.equal(amountCents, 9000);
+    return { success: true, status: 'confirmed', signature: 'test-signature', explorerUrl: 'https://explorer.solana.com/tx/test?cluster=devnet' };
   });
   try {
     const created = await (await createBill(baseUrl)).json();
@@ -111,8 +119,9 @@ test('settles a payer and prevents a second payment', async () => {
   }
 });
 
+// Prevent a bill from hiding a missing amount in one of its payer entries.
 test('rejects bills whose payer amounts do not equal the total', async () => {
-  const { server, baseUrl } = await startServer(async () => ({ transactionUrl: 'mock-url' }));
+  const { server, baseUrl } = await startServer(async () => ({ success: true, status: 'confirmed', explorerUrl: 'mock-url' }));
   try {
     const response = await fetch(`${baseUrl}/api/bills`, {
       method: 'POST',
@@ -130,8 +139,9 @@ test('rejects bills whose payer amounts do not equal the total', async () => {
   }
 });
 
+// A guessed or changed bearer token must not reveal another payer record.
 test('does not allow a guessed or another payer token to access a record', async () => {
-  const { server, baseUrl } = await startServer(async () => ({ transactionUrl: 'mock-url' }));
+  const { server, baseUrl } = await startServer(async () => ({ success: true, status: 'confirmed', explorerUrl: 'mock-url' }));
   try {
     const created = await (await createBill(baseUrl)).json();
     const guessedResponse = await fetch(`${baseUrl}/api/pay/${'a'.repeat(64)}`);
@@ -144,8 +154,9 @@ test('does not allow a guessed or another payer token to access a record', async
   }
 });
 
+// Ignore client attempts to set protected values such as status or amount.
 test('ignores client-controlled status and amount fields', async () => {
-  const { server, baseUrl } = await startServer(async () => ({ transactionUrl: 'mock-url' }));
+  const { server, baseUrl } = await startServer(async () => ({ success: true, status: 'confirmed', explorerUrl: 'mock-url' }));
   try {
     const response = await fetch(`${baseUrl}/api/bills`, {
       method: 'POST',
@@ -169,8 +180,9 @@ test('ignores client-controlled status and amount fields', async () => {
   }
 });
 
+// Reject bad wallet input and requests that are not JSON.
 test('rejects invalid wallet input and non-JSON requests', async () => {
-  const { server, baseUrl } = await startServer(async () => ({ transactionUrl: 'mock-url' }));
+  const { server, baseUrl } = await startServer(async () => ({ success: true, status: 'confirmed', explorerUrl: 'mock-url' }));
   try {
     const created = await (await createBill(baseUrl)).json();
     const invalidWallet = await fetch(`${baseUrl}/api/pay/${created.payers[0].linkToken}/settle`, {
@@ -191,8 +203,9 @@ test('rejects invalid wallet input and non-JSON requests', async () => {
   }
 });
 
+// Reject names that could be interpreted as HTML by a frontend.
 test('rejects markup-like payer names', async () => {
-  const { server, baseUrl } = await startServer(async () => ({ transactionUrl: 'mock-url' }));
+  const { server, baseUrl } = await startServer(async () => ({ success: true, status: 'confirmed', explorerUrl: 'mock-url' }));
   try {
     const response = await fetch(`${baseUrl}/api/bills`, {
       method: 'POST',
@@ -210,8 +223,9 @@ test('rejects markup-like payer names', async () => {
   }
 });
 
+// Do not allow a payment link to work after its expiry time.
 test('rejects an expired payer link', async () => {
-  const { server, baseUrl } = await startServer(async () => ({ transactionUrl: 'mock-url' }));
+  const { server, baseUrl } = await startServer(async () => ({ success: true, status: 'confirmed', explorerUrl: 'mock-url' }));
   try {
     const created = await (await createBill(baseUrl)).json();
     bills.get(created.billId).expiresAt = new Date(Date.now() - 1).toISOString();
@@ -223,6 +237,7 @@ test('rejects an expired payer link', async () => {
   }
 });
 
+// Record a failed attempt but keep the payer unpaid.
 test('records failed settlement attempts without marking the payer paid', async () => {
   const { server, baseUrl } = await startServer(async () => {
     throw new Error('insufficient allowance');
@@ -235,6 +250,7 @@ test('records failed settlement attempts without marking the payer paid', async 
       body: JSON.stringify({ payerWallet: '7xKX9pQm123456789ABCDEFGHJKLMNPQR' })
     });
     assert.equal(response.status, 502);
+    assert.deepEqual(await response.json(), { error: 'Settlement failed', code: 'TRANSACTION_FAILED' });
     assert.equal(settlementAttempts.length, 1);
     assert.equal(settlementAttempts[0].status, 'failed');
     assert.equal(settlementAttempts[0].error, 'insufficient allowance');

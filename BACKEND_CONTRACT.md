@@ -10,6 +10,7 @@ This is the shared contract for the backend, frontend, and Solana integration.
 {
   "id": "bill_123",
   "creatorId": "user_456",
+  "creatorWallet": "creator-wallet-public-key",
   "currency": "EUR",
   "totalAmountMinor": 9000,
   "payers": [
@@ -46,6 +47,7 @@ Request:
 ```json
 {
   "creatorId": "user_456",
+  "creatorWallet": "creator-wallet-public-key",
   "currency": "EUR",
   "totalAmountMinor": 9000,
   "payers": [
@@ -70,6 +72,7 @@ Response `201`:
 The response intentionally contains only `payerId`, `name`, `amount`, and `linkToken` for each payer. The client cannot set the payer status or amount through extra request fields.
 
 The backend must reject a bill where payer amounts do not add up to the total.
+`creatorWallet` is required for real settlement and must be a base58 wallet address. It is optional while the mock settlement adapter is being used.
 
 ### Get a payer bill
 
@@ -83,7 +86,6 @@ Response `200`:
   "payerId": "payer_789",
   "currency": "EUR",
   "amount": 3000,
-  "amountOwedMinor": 3000,
   "status": "pending"
 }
 ```
@@ -102,7 +104,7 @@ Request:
 }
 ```
 
-Person 1 will confirm the final settlement function shape. The backend should pass the payer wallet and amount owed to that function rather than duplicating on-chain logic.
+The backend calls `settlePayment({ payerWallet, creatorWallet, amountCents })`. The real adapter must return `success: true`, `status: "confirmed"`, a transaction `signature`, and an `explorerUrl` before the backend marks the payer as paid.
 
 Response `200`:
 
@@ -114,6 +116,7 @@ Response `200`:
 ```
 
 Return `409` when the payer is already paid, `400` for invalid input, and `502` when the on-chain settlement fails. Do not mark a payer as paid until Person 1's settlement function confirms success.
+Settlement failures return a safe error code such as `INSUFFICIENT_ALLOWANCE` or `TRANSACTION_NOT_CONFIRMED`; raw provider errors are never returned to the client.
 
 Every settlement attempt is recorded with its payer, wallet public key, amount, timestamp, and outcome (`started`, `paid`, or `failed`). Settlement errors are recorded internally without exposing sensitive key material in the response.
 
@@ -123,7 +126,7 @@ After Google login, the frontend waits for the embedded wallet to appear in Priv
 
 The public key is a base58-encoded Solana address. The backend treats it as an opaque string and does not enforce an exact character count or add a `0x` prefix.
 
-The funding endpoint and function shape are still pending Person 1's confirmation. The settlement endpoint already accepts the same public key in `payerWallet`.
+The planned server-only funding interface is `fundTestWallet({ walletAddress, tokenAmountCents })`. The planned approval check is `checkApproval({ payerWallet, amountCents })`. Both are mocked until Person 1 supplies the real implementations. The settlement endpoint accepts the payer public key in `payerWallet` and uses the stored `creatorWallet`.
 
 Payment links are bearer credentials: possession of a valid, unexpired link grants access to that payer record. Tokens are 32 random bytes and only their SHA-256 hashes are stored. Bill creation currently has no authenticated session because the wallet/auth contract is not integrated into this backend yet; add creator authentication before production use.
 
