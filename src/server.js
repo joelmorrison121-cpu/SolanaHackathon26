@@ -180,7 +180,7 @@ const findPayer = (linkToken) => {
 
 export { createApp, bills, mockSettlementAdapter };
 
-if (process.argv[1] && process.argv[1].endsWith('src/server.js')) {
+if (process.argv[1] && process.argv[1].endsWith('server.js')) {
   createServer(createApp()).listen(port, () => {
     console.log(`Backend listening on http://localhost:${port}`);
   });
