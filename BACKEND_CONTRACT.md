@@ -67,6 +67,8 @@ Response `201`:
 }
 ```
 
+The response intentionally contains only `payerId`, `name`, `amount`, and `linkToken` for each payer. The client cannot set the payer status or amount through extra request fields.
+
 The backend must reject a bill where payer amounts do not add up to the total.
 
 ### Get a payer bill
@@ -86,7 +88,7 @@ Response `200`:
 }
 ```
 
-Invalid or expired links return `404`.
+Invalid links return `404`; expired links return `410`.
 
 ### Settle a payer bill
 
@@ -113,6 +115,8 @@ Response `200`:
 
 Return `409` when the payer is already paid, `400` for invalid input, and `502` when the on-chain settlement fails. Do not mark a payer as paid until Person 1's settlement function confirms success.
 
+Every settlement attempt is recorded with its payer, wallet public key, amount, timestamp, and outcome (`started`, `paid`, or `failed`). Settlement errors are recorded internally without exposing sensitive key material in the response.
+
 ## Wallet handoff
 
 After Google login, the frontend waits for the embedded wallet to appear in Privy's `wallets` array. It then sends the wallet's public key to the backend so Person 1's funding function can airdrop mUSDC and devnet SOL. The private key never leaves Privy and must never be sent to the backend.
@@ -120,6 +124,8 @@ After Google login, the frontend waits for the embedded wallet to appear in Priv
 The public key is a base58-encoded Solana address. The backend treats it as an opaque string and does not enforce an exact character count or add a `0x` prefix.
 
 The funding endpoint and function shape are still pending Person 1's confirmation. The settlement endpoint already accepts the same public key in `payerWallet`.
+
+Payment links are bearer credentials: possession of a valid, unexpired link grants access to that payer record. Tokens are 32 random bytes and only their SHA-256 hashes are stored. Bill creation currently has no authenticated session because the wallet/auth contract is not integrated into this backend yet; add creator authentication before production use.
 
 ## Screen flow
 
