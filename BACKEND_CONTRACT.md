@@ -112,6 +112,14 @@ Response `200`:
 
 Return `409` when the payer is already paid, `400` for invalid input, and `502` when the on-chain settlement fails. Do not mark a payer as paid until Person 1's settlement function confirms success.
 
+## Wallet handoff
+
+After Google login, the frontend waits for the embedded wallet to appear in Privy's `wallets` array. It then sends the wallet's public key to the backend so Person 1's funding function can airdrop mUSDC and devnet SOL. The private key never leaves Privy and must never be sent to the backend.
+
+The public key is a base58-encoded Solana address. The backend treats it as an opaque string and does not enforce an exact character count or add a `0x` prefix.
+
+The funding endpoint and function shape are still pending Person 1's confirmation. The settlement endpoint already accepts the same public key in `payerWallet`.
+
 ## Screen flow
 
 1. Person 4's create-bill screen sends the total and payer amounts to `POST /api/bills`.
@@ -123,6 +131,6 @@ Return `409` when the payer is already paid, `400` for invalid input, and `502` 
 
 ## Team decisions needed at the 12:30 sync
 
-- Person 1's exact settlement function arguments and return type.
+- Person 1's exact settlement and wallet-funding function arguments and return types.
 - Whether the backend identifies the creator by authenticated user ID or a demo-only creator ID.
 - Link expiry duration and whether links can be revoked.
