@@ -62,7 +62,7 @@ Response `201`:
 {
   "billId": "bill_123",
   "payers": [
-    { "payerId": "payer_789", "displayName": "Alex", "amountOwedMinor": 3000, "shareLink": "/pay/opaque-random-token" }
+    { "payerId": "payer_789", "name": "Alex", "amount": 3000, "linkToken": "opaque-random-token" }
   ]
 }
 ```
@@ -80,6 +80,7 @@ Response `200`:
   "billId": "bill_123",
   "payerId": "payer_789",
   "currency": "EUR",
+  "amount": 3000,
   "amountOwedMinor": 3000,
   "status": "pending"
 }

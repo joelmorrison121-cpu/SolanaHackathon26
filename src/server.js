@@ -102,6 +102,9 @@ const createApp = ({ settlementAdapter = mockSettlementAdapter } = {}) => async 
         billId,
         payers: createdPayers.map(({ payer, linkToken }) => ({
           payerId: payer.id,
+          name: payer.displayName,
+          amount: payer.amountOwedMinor,
+          linkToken,
           displayName: payer.displayName,
           amountOwedMinor: payer.amountOwedMinor,
           shareLink: `/pay/${linkToken}`
@@ -122,6 +125,7 @@ const createApp = ({ settlementAdapter = mockSettlementAdapter } = {}) => async 
         billId: payer.bill.id,
         payerId: payer.payer.id,
         currency: payer.bill.currency,
+        amount: payer.payer.amountOwedMinor,
         amountOwedMinor: payer.payer.amountOwedMinor,
         status: payer.payer.status
       }));

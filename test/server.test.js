@@ -29,15 +29,18 @@ test('creates a bill and fetches it through its share link', async () => {
     const createResponse = await createBill(baseUrl);
     assert.equal(createResponse.status, 201);
     const created = await createResponse.json();
-    assert.match(created.payers[0].shareLink, /^\/pay\/[a-f0-9]{64}$/);
+    assert.equal(created.payers[0].name, 'Alex');
+    assert.equal(created.payers[0].amount, 9000);
+    assert.match(created.payers[0].linkToken, /^[a-f0-9]{64}$/);
 
-    const linkToken = created.payers[0].shareLink.split('/').pop();
+    const linkToken = created.payers[0].linkToken;
     const billResponse = await fetch(`${baseUrl}/api/pay/${linkToken}`);
     assert.equal(billResponse.status, 200);
     assert.deepEqual(await billResponse.json(), {
       billId: created.billId,
       payerId: created.payers[0].payerId,
       currency: 'EUR',
+      amount: 9000,
       amountOwedMinor: 9000,
       status: 'pending'
     });
@@ -54,7 +57,7 @@ test('settles a payer and prevents a second payment', async () => {
   });
   try {
     const created = await (await createBill(baseUrl)).json();
-    const linkToken = created.payers[0].shareLink.split('/').pop();
+    const linkToken = created.payers[0].linkToken;
     const settleUrl = `${baseUrl}/api/pay/${linkToken}/settle`;
     const settleResponse = await fetch(settleUrl, {
       method: 'POST',
