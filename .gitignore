@@ -2,3 +2,10 @@
 .env.*
 !.env.example
 node_modules/
+client/node_modules/
+client/dist/
+.DS_Store
+
+client/node_modules/
+client/dist/
+.DS_Store

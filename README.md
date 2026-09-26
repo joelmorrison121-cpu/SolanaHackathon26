@@ -8,12 +8,16 @@ The API has three main routes:
 - `GET /api/pay/:linkToken` shows the amount and payment status for one payer.
 - `POST /api/pay/:linkToken/settle` tries to settle one payment.
 
+The Split frontend lives in `client/`. It talks to those same routes. The backend in `src/` is unchanged.
+
 ## Team Build
 
 The shared backend data model, API contract, and screen flow are documented in [BACKEND_CONTRACT.md](BACKEND_CONTRACT.md).
 Security controls and current limitations are documented in [SECURITY.md](SECURITY.md).
 
-## Backend
+## Run it locally
+
+Terminal 1, backend:
 
 ```text
 npm test
@@ -21,5 +25,15 @@ npm start
 ```
 
 The API runs at `http://localhost:3000`. It currently uses in-memory storage and a mock settlement adapter. The adapter is isolated in `src/lib/solana-adapter.js` so Person 1's confirmed Solana settlement function can replace it later without changing the API routes.
+
+Terminal 2, frontend:
+
+```text
+cd client
+npm install
+npm run dev
+```
+
+The site runs at `http://localhost:5173` and proxies `/api` to the backend.
 
 The server is for the hackathon demo. Bills and settlement logs disappear when the server stops. Do not use the current in-memory storage as a production database.
